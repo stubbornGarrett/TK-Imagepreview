@@ -4,12 +4,14 @@ from tkinter.ttk import Separator
 from PIL     import Image, ImageTk
 import Imagepreview
 import time
+import os
 
 def main():
     root = Tk()
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
     root.geometry('900x600+50+50')
+    root.title('Imagepreview Test')
 
     window = Frame(root)
     window.grid(column=0, row=0, sticky='news')
@@ -63,7 +65,12 @@ def main():
     infoLabel.grid(column=0, row=3, sticky='s')
     infoLabel.config(text='Scale:\t\tx{}\n\nWidth:\t\t{}\nHeight:\t\t{}\n\nScale width:\t{}\nScale height:\t{}'.format(round(preview.canvasScale,2), testImage.width, testImage.height, preview.resizedImage.width, preview.resizedImage.height))
 
-    root.bind('<MouseWheel>', update_label)
+    if os.name == 'nt':
+        root.bind('<MouseWheel>', update_label)
+    elif os.name == 'posix':
+        root.bind('<Button-4>', update_label)
+        root.bind('<Button-5>', update_label)
+    # root.bind('<MouseWheel>', update_label)
     root.bind('1',            original_button)
     root.bind('<Control-r>',  reset_button)
 

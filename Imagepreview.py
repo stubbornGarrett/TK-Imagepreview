@@ -9,6 +9,7 @@ June 2019
 
 from tkinter import Frame, Canvas
 from PIL     import Image, ImageTk
+import os
 
 class Imagepreview(Frame):
     def __init__(self, parentWidget, image=None, zoomscale=1.2, minzoomlevel=0.1, maxzoomlevel=3, quality=0, backgroundcolor='#999999'):
@@ -16,21 +17,17 @@ class Imagepreview(Frame):
         A tkinter Frame, which contains a canvas. The canvas adapts to the size of the frame.\n
         
         *****Init parameters*****
-        parentWidget:    Widget wich will contain this class (e.g. Tk root window).\n
+        parentWidget:    Widget which will contain this class (e.g. Tk root window or Frame).\n
         image:           The image, which will be displayed on the canvas (can be changed with '.update_image(*PIL.Image*)').\n
         backgroundcolor: Color of whitespace on canvas.\n
         zoomscale:       If the mouse is inside the canvas and the mousewheel gets triggered (Up/Down), the image is scaled by this factor.\n
         minzoom/maxzoom: Minimum and maximum value, for scaling the image.\n
-        quality (0-4:    Different operations to resize image [NEAREST, BILINEAR, HAMMING, BICUBIC, LANCZOS]
+        quality (0-4):    Different operations to resize image [NEAREST, BILINEAR, HAMMING, BICUBIC, LANCZOS]
         *************************
 
         *********Actions*********
         To move the image, have the mouse inside the canvas, hold down left mouse button and drag.
         For zooming, scroll the mouse wheel up or down.
-        *************************
-
-        ***For use under Linux***
-        Sitch the outcommented lines in .creat_binds()
         *************************
         '''
 
@@ -72,7 +69,11 @@ class Imagepreview(Frame):
         self.bind('<Configure>', self.adjust_canvas_size)
         self.previewCanvas.bind('<ButtonPress-1>',  self.scroll_start)
         self.previewCanvas.bind('<B1-Motion>',      self.scroll_move)
-        self.previewCanvas.bind('<MouseWheel>',     self.zoom)
+        if os.name == 'nt':
+            self.previewCanvas.bind('<MouseWheel>', self.zoom)
+        elif os.name == 'posix':
+            self.previewCanvas.bind('<Button-4>', self.zoom)
+            self.previewCanvas.bind('<Button-5>', self.zoom)
 
     def adjust_canvas_size(self, event=None):
         self.previewCanvas.config(width=self.winfo_width(), height=self.winfo_height())
@@ -87,18 +88,33 @@ class Imagepreview(Frame):
             self.display_image(image=self.previewImage, quality=self.resizeQuality)
 
     def zoom(self, event):
-        if event.delta >= 0 and self.canvasScale*self.zoomscale < self.maxlevel:
-            self.canvasScale *= self.zoomscale
-            self.scaleChanged = True
-        elif event.delta >= 0 and self.canvasScale < self.maxlevel:
-            self.canvasScale = self.maxlevel
-            self.scaleChanged = True
-        if event.delta <  0 and self.canvasScale/self.zoomscale > self.minlevel:
-            self.canvasScale *= 1/self.zoomscale
-            self.scaleChanged = True
-        elif event.delta < 0 and self.canvasScale > self.minlevel:
-            self.canvasScale = self.minlevel
-            self.scaleChanged = True
+        if os.name == 'nt':
+            if event.delta >= 0 and self.canvasScale*self.zoomscale < self.maxlevel:
+                self.canvasScale *= self.zoomscale
+                self.scaleChanged = True
+            elif event.delta >= 0 and self.canvasScale < self.maxlevel:
+                self.canvasScale  = self.maxlevel
+                self.scaleChanged = True
+            if event.delta <  0 and self.canvasScale/self.zoomscale > self.minlevel:
+                self.canvasScale *= 1/self.zoomscale
+                self.scaleChanged = True
+            elif event.delta < 0 and self.canvasScale > self.minlevel:
+                self.canvasScale  = self.minlevel
+                self.scaleChanged = True
+        elif os.name == 'posix':
+            if event.num   == 4 and self.canvasScale*self.zoomscale < self.maxlevel:
+                self.canvasScale *= self.zoomscale
+                self.scaleChanged = True
+            elif event.num == 4 and self.canvasScale < self.maxlevel:
+                self.canvasScale  = self.maxlevel
+                self.scaleChanged = True
+            if event.num   ==  5 and self.canvasScale/self.zoomscale > self.minlevel:
+                self.canvasScale *= 1/self.zoomscale
+                self.scaleChanged = True
+            elif event.num == 5 and self.canvasScale > self.minlevel:
+                self.canvasScale  = self.minlevel
+                self.scaleChanged = True
+
         self.display_image(event.x, event.y, self.previewImage, self.resizeQuality)
 
     def update_image(self, image=None):
@@ -135,24 +151,20 @@ class Imagepreview(Frame):
             topEdge    = self.previewCanvas.canvasy(0)-self.whiteSpaceY  if self.previewCanvas.canvasy(0) > self.whiteSpaceY  else 0
             bottomEdge = self.resizeHeight+(self.whiteSpaceY+self.previewCanvas.canvasy(0)) if self.resizeHeight+self.whiteSpaceY-(self.previewCanvas.canvasy(0)) > self.previewCanvas.winfo_height() else self.resizedImage.height
 
-            x = self.previewCanvas.winfo_width() / 2 + (leftEdge + rightEdge  - self.resizeWidth)  /2
-            y = self.previewCanvas.winfo_height()/ 2 + (topEdge  + bottomEdge - self.resizeHeight) /2
+            xPos = self.previewCanvas.winfo_width() / 2 + (leftEdge + rightEdge  - self.resizeWidth)  /2
+            yPos = self.previewCanvas.winfo_height()/ 2 + (topEdge  + bottomEdge - self.resizeHeight) /2
             if rightEdge - leftEdge > 0 and bottomEdge - topEdge > 0:
                 cropedImage         = self.resizedImage.crop((leftEdge, topEdge, rightEdge, bottomEdge))
                 self.canvasImage    = ImageTk.PhotoImage(cropedImage)
-                self.canvasImage_ID = self.previewCanvas.create_image(x, y, image=self.canvasImage)
-
-            # self.previewCanvas.scale('ALL', x, y, self.canvasScale, self.canvasScale)
+                self.canvasImage_ID = self.previewCanvas.create_image(xPos, yPos, image=self.canvasImage)
 
     def check_border_contact(self):
         if self.previewCanvas.canvasx(0)+15 > self.whiteSpaceX \
         or self.resizeWidth +self.whiteSpaceX-(self.previewCanvas.canvasx(0)-15) > self.previewCanvas.winfo_width() \
         or self.previewCanvas.canvasy(0)+15 > self.whiteSpaceY \
         or self.resizeHeight+self.whiteSpaceY-(self.previewCanvas.canvasy(0)-15) > self.previewCanvas.winfo_height():
-            print('true')
             return True
         else:
-            print('false')
             return False
 
     def original_zoom(self, event=None):
