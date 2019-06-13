@@ -115,7 +115,32 @@ class Imagepreview(Frame):
                 self.canvasScale  = self.minlevel
                 self.scaleChanged = True
 
-        if self.canvasImage_ID
+        if self.previewCanvas.canvasx(self.previewCanvas.winfo_width()) < self.previewCanvas.winfo_width():
+           self.previewCanvas.xview('scroll', +1, 'units')
+           print('1')
+        if self.previewCanvas.canvasx(0) > 0:
+           self.previewCanvas.xview('scroll', -1, 'units')
+           print('2')
+        if self.previewCanvas.canvasy(self.previewCanvas.winfo_height()) < self.previewCanvas.winfo_height():
+           self.previewCanvas.yview('scroll', +1, 'units')
+           print('3')
+        if self.previewCanvas.canvasy(0) > 0:
+           self.previewCanvas.yview('scroll', -1, 'units')
+           print('4')
+
+        # if self.previewCanvas.canvasx(self.previewCanvas.winfo_width()) < self.previewCanvas.winfo_width():
+        #     self.previewCanvas.xview('moveto', +0.1)
+        #     print('1')
+        # if self.previewCanvas.canvasx(0) > 0:
+        #     self.previewCanvas.xview('moveto', -0.1)
+        #     print('2')
+        # if self.previewCanvas.canvasy(self.previewCanvas.winfo_height()) < self.previewCanvas.winfo_height():
+        #     self.previewCanvas.yview('moveto', +0.1)
+        #     print('3')
+        # if self.previewCanvas.canvasy(0) > 0:
+        #     self.previewCanvas.yview('moveto', -0.1)
+        #     print('4')
+
         self.display_image(event.x, event.y, self.previewImage, self.resizeQuality)
 
     def update_image(self, image=None):
