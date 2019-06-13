@@ -115,6 +115,7 @@ class Imagepreview(Frame):
                 self.canvasScale  = self.minlevel
                 self.scaleChanged = True
 
+        if self.canvasImage_ID
         self.display_image(event.x, event.y, self.previewImage, self.resizeQuality)
 
     def update_image(self, image=None):
@@ -130,8 +131,8 @@ class Imagepreview(Frame):
             self.reset_preview()
             self.display_image(image=self.previewImage, quality=self.resizeQuality)
         else:
-            self.previewCanvas.delete(self.previewImage_ID)
-            self.previewImage_ID = None
+            self.previewCanvas.delete(self.canvasImage_ID)
+            self.canvasImage_ID = None
 
     def display_image(self, x=0, y=0, image=None, quality=0):
         if self.imageLoaded:
